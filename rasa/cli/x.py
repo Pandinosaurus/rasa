@@ -117,7 +117,7 @@ def rasa_x(args: argparse.Namespace) -> None:
     else:
         rasa.shared.utils.io.raise_warning(
             "Running Rasa X in local mode is no longer supported as Rasa has "
-            "stopped supporting the Community Edition (free version) of ‘Rasa X’."
+            "stopped supporting the Community Edition (free version) of `Rasa X`."
             "For more information please see "
             "https://rasa.com/blog/rasa-x-community-edition-changes/",
             UserWarning,

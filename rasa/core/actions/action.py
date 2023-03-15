@@ -153,7 +153,6 @@ def is_retrieval_action(action_name: Text, retrieval_intents: List[Text]) -> boo
         `True` if the resolved intent name is present in the list of retrieval
         intents, `False` otherwise.
     """
-
     return (
         ActionRetrieveResponse.intent_name_from_action(action_name) in retrieval_intents
     )
@@ -210,7 +209,6 @@ def action_for_name_or_text(
 
 def create_bot_utterance(message: Dict[Text, Any]) -> BotUttered:
     """Create BotUttered event from message."""
-
     bot_message = BotUttered(
         text=message.pop("text", None),
         data={
@@ -236,7 +234,6 @@ class Action:
 
     def name(self) -> Text:
         """Unique identifier of this simple action."""
-
         raise NotImplementedError
 
     async def run(
@@ -501,14 +498,15 @@ class ActionBack(ActionBotResponse):
         # only utter the response if it is available
         evts = await super().run(output_channel, nlg, tracker, domain)
 
-        return evts + [UserUtteranceReverted(), UserUtteranceReverted()]
+        return [*evts, UserUtteranceReverted(), UserUtteranceReverted()]
 
 
 class ActionListen(Action):
     """The first action in any turn - bot waits for a user message.
 
     The bot should stop taking further actions and wait for the user to say
-    something."""
+    something.
+    """
 
     def name(self) -> Text:
         return ACTION_LISTEN_NAME
@@ -549,7 +547,7 @@ class ActionRestart(ActionBotResponse):
         # only utter the response if it is available
         evts = await super().run(output_channel, nlg, tracker, domain)
 
-        return evts + [Restarted()]
+        return [*evts, Restarted()]
 
 
 class ActionSessionStart(Action):
@@ -568,7 +566,6 @@ class ActionSessionStart(Action):
         tracker: "DialogueStateTracker",
     ) -> List["SlotSet"]:
         """Fetch SlotSet events from tracker and carry over key, value and metadata."""
-
         return [
             SlotSet(key=event.key, value=event.value, metadata=event.metadata)
             for event in tracker.applied_events()
@@ -615,7 +612,7 @@ class ActionDefaultFallback(ActionBotResponse):
         # only utter the response if it is available
         evts = await super().run(output_channel, nlg, tracker, domain)
 
-        return evts + [UserUtteranceReverted()]
+        return [*evts, UserUtteranceReverted()]
 
 
 class ActionDeactivateLoop(Action):
@@ -830,7 +827,9 @@ class RemoteAction(Action):
 
 class ActionExecutionRejection(RasaException):
     """Raising this exception will allow other policies
-    to predict a different action"""
+    to predict a different action
+    .
+    """
 
     def __init__(self, action_name: Text, message: Optional[Text] = None) -> None:
         self.action_name = action_name
@@ -921,7 +920,7 @@ def _revert_affirmation_events(tracker: "DialogueStateTracker") -> List[Event]:
     # a larger refactoring (e.g. switch to dataclass)
     last_user_event.parse_data["intent"]["confidence"] = 1.0  # type: ignore[typeddict-item]  # noqa: E501
 
-    return revert_events + [last_user_event]
+    return [*revert_events, last_user_event]
 
 
 def _revert_single_affirmation_events() -> List[Event]:
@@ -940,7 +939,7 @@ def _revert_successful_rephrasing(tracker: "DialogueStateTracker") -> List[Event
         raise TypeError("Cannot find last event to revert to.")
 
     last_user_event = copy.deepcopy(last_user_event)
-    return _revert_rephrasing_events() + [last_user_event]
+    return [*_revert_rephrasing_events(), last_user_event]
 
 
 def _revert_rephrasing_events() -> List[Event]:

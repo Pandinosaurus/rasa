@@ -133,7 +133,8 @@ class ForkTracker(Exception):
     """Exception used to break out the flow and fork at a previous step.
 
     The tracker will be reset to the selected point in the past and the
-    conversation will continue from there."""
+    conversation will continue from there.
+    """
 
     pass
 
@@ -142,7 +143,8 @@ class UndoLastStep(Exception):
     """Exception used to break out the flow and undo the last step.
 
     The last step is either the most recent user message or the most
-    recent action run by the bot."""
+    recent action run by the bot.
+    """
 
     pass
 
@@ -407,8 +409,8 @@ async def _request_fork_from_user(
     """Take in a conversation and ask at which point to fork the conversation.
 
     Returns the list of events that should be kept. Forking means, the
-    conversation will be reset and continued from this previous point."""
-
+    conversation will be reset and continued from this previous point.
+    """
     tracker = await retrieve_tracker(
         endpoint, conversation_id, EventVerbosity.AFTER_RESTART
     )
@@ -436,8 +438,8 @@ async def _request_intent_from_user(
 ) -> Dict[Text, Any]:
     """Take in latest message and ask which intent it should have been.
 
-    Returns the intent dict that has been selected by the user."""
-
+    Returns the intent dict that has been selected by the user.
+    """
     predictions = latest_message.get("parse_data", {}).get("intent_ranking", [])
 
     predicted_intents = {p[INTENT_NAME_KEY] for p in predictions}
@@ -448,8 +450,9 @@ async def _request_intent_from_user(
 
     # convert intents to ui list and add <other> as a free text alternative
     choices = [
-        {INTENT_NAME_KEY: "<create_new_intent>", "value": OTHER_INTENT}
-    ] + _selection_choices_from_intent_prediction(predictions)
+        {INTENT_NAME_KEY: "<create_new_intent>", "value": OTHER_INTENT},
+        *_selection_choices_from_intent_prediction(predictions),
+    ]
 
     intent_name = await _request_selection_from_intents(
         choices, conversation_id, endpoint
@@ -495,7 +498,8 @@ def _chat_history_table(events: List[Dict[Text, Any]]) -> Text:
     """Create a table containing bot and user messages.
 
     Also includes additional information, like any events and
-    prediction probabilities."""
+    prediction probabilities.
+    """
 
     def wrap(txt: Text, max_width: int) -> Text:
         true_wrapping_width = calc_true_wrapping_width(txt, max_width)
@@ -668,7 +672,6 @@ async def _request_action_from_user(
     predictions: List[Dict[Text, Any]], conversation_id: Text, endpoint: EndpointConfig
 ) -> Tuple[Text, bool]:
     """Ask the user to correct an action prediction."""
-
     await _print_history(conversation_id, endpoint)
 
     choices = [
@@ -687,9 +690,11 @@ async def _request_action_from_user(
         for action in session_actions_unique
         if action not in old_actions
     ]
-    choices = (
-        [{"name": "<create new action>", "value": NEW_ACTION}] + new_actions + choices
-    )
+    choices = [
+        {"name": "<create new action>", "value": NEW_ACTION},
+        *new_actions,
+        *choices,
+    ]
     question = questionary.select("What is the next action of the bot?", choices)
 
     action_name = await _ask_questions(question, conversation_id, endpoint)
@@ -764,7 +769,8 @@ def _split_conversation_at_restarts(
 ) -> List[List[Dict[Text, Any]]]:
     """Split a conversation at restart events.
 
-    Returns an array of event lists, without the restart events."""
+    Returns an array of event lists, without the restart events.
+    """
     deserialized_events = [Event.from_parameters(event) for event in events]
     split_events = rasa.shared.core.events.split_events(
         deserialized_events, Restarted, include_splitting_event=False
@@ -775,8 +781,9 @@ def _split_conversation_at_restarts(
 
 def _collect_messages(events: List[Dict[Text, Any]]) -> List[Message]:
     """Collect the message text and parsed data from the UserMessage events
-    into a list"""
-
+    into a list
+    .
+    """
     import rasa.shared.nlu.training_data.util as rasa_nlu_training_data_utils
 
     messages = []
@@ -797,7 +804,6 @@ def _collect_messages(events: List[Dict[Text, Any]]) -> List[Message]:
 
 def _collect_actions(events: List[Dict[Text, Any]]) -> List[Dict[Text, Any]]:
     """Collect all the `ActionExecuted` events into a list."""
-
     return [evt for evt in events if evt.get("event") == ActionExecuted.type_name]
 
 
@@ -849,8 +855,7 @@ def _write_stories_to_file(
 
 
 def _filter_messages(msgs: List[Message]) -> List[Message]:
-    """Filter messages removing those that start with INTENT_MESSAGE_PREFIX"""
-
+    """Filter messages removing those that start with INTENT_MESSAGE_PREFIX."""
     filtered_messages = []
     for msg in msgs:
         if not msg.get(TEXT).startswith(INTENT_MESSAGE_PREFIX):
@@ -907,7 +912,6 @@ def _entities_from_messages(messages: List[Message]) -> List[Text]:
 
 def _intents_from_messages(messages: List[Message]) -> Set[Text]:
     """Return all intents that occur in at least one of the messages."""
-
     # set of distinct intents
     distinct_intents = {m.data["intent"] for m in messages if "intent" in m.data}
 
@@ -918,7 +922,6 @@ def _write_domain_to_file(
     domain_path: Text, events: List[Dict[Text, Any]], old_domain: Domain
 ) -> None:
     """Write an updated domain file to the file path."""
-
     io_utils.create_path(domain_path)
 
     messages = _collect_messages(events)
@@ -954,7 +957,6 @@ async def _predict_till_next_listen(
     plot_file: Optional[Text],
 ) -> None:
     """Predict and validate actions until we need to wait for a user message."""
-
     listen = False
     while not listen:
         result = await request_prediction(endpoint, conversation_id)
@@ -1565,7 +1567,7 @@ def _get_tracker_events_to_plot(
     training_data_events: List[Union[Text, Deque[Event]]] = [
         t.events for t in training_trackers
     ]
-    return training_data_events + [conversation_id]
+    return [*training_data_events, conversation_id]
 
 
 def _get_training_trackers(
@@ -1593,7 +1595,6 @@ def _serve_application(
 
     async def run_interactive_io(running_app: Sanic) -> None:
         """Small wrapper to shut down the server once cmd io is done."""
-
         await record_messages(
             endpoint=endpoint,
             file_importer=file_importer,
@@ -1701,7 +1702,7 @@ def calc_true_wrapping_width(text: Text, monospace_wrapping_width: int) -> int:
     Chinese, Japanese and Korean characters are often broader than ascii
     characters:
     abcdefgh (8 chars)
-    æˆ‘è¦åŽ»åŒ—äº¬ (5 chars, roughly same visible width)
+    æ^`è¦åŽ»åŒ—äº¬ (5 chars, roughly same visible width)
 
     We need to account for that otherwise the wrapping doesn't work
     appropriately for long strings and the table overflows and creates

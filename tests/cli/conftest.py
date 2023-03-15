@@ -19,7 +19,7 @@ RASA_EXE = os.environ.get("RASA_EXECUTABLE", "rasa")
 @pytest.fixture
 def run(testdir: Testdir) -> Callable[..., RunResult]:
     def do_run(*args):
-        args = [shutil.which(RASA_EXE)] + list(args)
+        args = [shutil.which(RASA_EXE), *list(args)]
         return testdir.run(*args)
 
     return do_run
@@ -28,7 +28,7 @@ def run(testdir: Testdir) -> Callable[..., RunResult]:
 @pytest.fixture
 def run_with_stdin(testdir: Testdir) -> Callable[..., RunResult]:
     def do_run(*args, stdin):
-        args = [shutil.which(RASA_EXE)] + list(args)
+        args = [shutil.which(RASA_EXE), *list(args)]
         return testdir.run(*args, stdin=stdin)
 
     return do_run
@@ -91,7 +91,7 @@ def run_in_simple_project(testdir: Testdir) -> Callable[..., RunResult]:
     create_simple_project(testdir.tmpdir)
 
     def do_run(*args):
-        args = [shutil.which(RASA_EXE)] + list(args)
+        args = [shutil.which(RASA_EXE), *list(args)]
         return testdir.run(*args)
 
     return do_run
@@ -112,7 +112,7 @@ def run_in_simple_project_with_model(
             shutil.copytree(full_file_name, str(testdir.tmpdir / file_name))
 
     def do_run(*args):
-        args = [shutil.which(RASA_EXE)] + list(args)
+        args = [shutil.which(RASA_EXE), *list(args)]
         result = testdir.run(*args)
         os.environ["LOG_LEVEL"] = "INFO"
         return result

@@ -445,5 +445,5 @@ class ConveRTFeaturizer(DenseFeaturizer, GraphComponent):
     @staticmethod
     def _clean_tokens(tokens: List[bytes]) -> List[Text]:
         """Encode tokens and remove special char added by ConveRT."""
-        decoded_tokens = [string.decode("utf-8").replace("﹏", "") for string in tokens]
+        decoded_tokens = [string.decode("utf-8").replace("_", "") for string in tokens]
         return [string for string in decoded_tokens if string]

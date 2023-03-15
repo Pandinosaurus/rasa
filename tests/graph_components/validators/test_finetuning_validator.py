@@ -419,7 +419,7 @@ def test_validate_after_removing_or_adding_intent_or_action_name(
         validate(importer=importer2)
 
     # ... apply with additional item
-    importer3 = DummyNLUDataImporter(messages + [message_with_new_item])
+    importer3 = DummyNLUDataImporter([*messages, message_with_new_item])
     if nlu:
         with pytest.raises(InvalidConfigException):
             validate(importer=importer3)

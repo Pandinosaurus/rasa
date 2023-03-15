@@ -99,10 +99,15 @@ def test_container_fingerprint_differ_for_containers_with_different_insertion_or
 
 @pytest.mark.parametrize(
     "no_or_multiple_key_attributes",
-    [list(), ["other"]]
-    + list(
-        itertools.permutations(MessageContainerForCoreFeaturization.KEY_ATTRIBUTES, 2)
-    ),
+    [
+        list(),
+        ["other"],
+        *list(
+            itertools.permutations(
+                MessageContainerForCoreFeaturization.KEY_ATTRIBUTES, 2
+            )
+        ),
+    ],
 )
 def test_container_add_fails_if_message_has_wrong_attributes(
     no_or_multiple_key_attributes: List[Text],

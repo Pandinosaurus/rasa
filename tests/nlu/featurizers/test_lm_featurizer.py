@@ -432,7 +432,7 @@ class TestShapeValuesTrainAndProcess:
             "bert-base-chinese",
             [
                 "晚上好",  # normal & easy case
-                "没问题！",  # `！` is a Chinese punctuation
+                "没问题!",  # `!` is a Chinese punctuation
                 "去东畈村",  # `畈` is a OOV token for bert-base-chinese
                 "好的😃",
                 # include a emoji which is common in Chinese text-based chat

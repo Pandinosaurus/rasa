@@ -11,7 +11,7 @@ from _pytest.fixtures import FixtureRequest
 @pytest.fixture
 def run(pytester: Pytester) -> Callable[..., RunResult]:
     def do_run(*args):
-        args = [shutil.which("rasa")] + list(args)
+        args = [shutil.which("rasa"), *list(args)]
         return pytester.run(*args)
 
     return do_run

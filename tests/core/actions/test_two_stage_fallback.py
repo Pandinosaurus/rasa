@@ -55,9 +55,11 @@ def _two_stage_clarification_request() -> List[Event]:
     "events",
     [
         _message_requiring_fallback(),
-        _message_requiring_fallback()
-        + [UserUtteranceReverted()]
-        + _message_requiring_fallback(),
+        [
+            *_message_requiring_fallback(),
+            UserUtteranceReverted(),
+            *_message_requiring_fallback(),
+        ],
     ],
 )
 async def test_ask_affirmation(events: List[Event]):

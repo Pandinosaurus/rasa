@@ -33,8 +33,8 @@ def create_jieba(config: Optional[Dict] = None) -> JiebaTokenizer:
             [(0, 1), (1, 2), (2, 3), (3, 4), (4, 6), (6, 8)],
         ),
         (
-            "Micheal你好吗？",
-            ["Micheal", "你好", "吗", "？"],
+            "Micheal你好吗?",
+            ["Micheal", "你好", "吗", "?"],
             [(0, 7), (7, 9), (9, 10), (10, 11)],
         ),
     ],

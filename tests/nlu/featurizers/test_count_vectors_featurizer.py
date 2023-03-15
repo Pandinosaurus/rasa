@@ -434,8 +434,8 @@ def test_count_vector_featurizer_persist_load(
     }
     train_ftr = create_featurizer(config)
 
-    sentence1 = "ababab 123 13xc лаомтгцу sfjv oö aà"
-    sentence2 = "abababalidcn 123123 13xcdc лаомтгцу sfjv oö aà"
+    sentence1 = "ababab 123 13xc лaoмтrцy sfjv oö aà"
+    sentence2 = "abababalidcn 123123 13xcdc лaoмтrцy sfjv oö aà"
 
     train_message1 = Message(data={TEXT: sentence1})
     train_message2 = Message(data={TEXT: sentence2})

@@ -448,7 +448,7 @@ class TestMemoizationPolicy(PolicyTestCollection):
             default_domain, stories_path, augmentation_factor=20
         )
 
-        loaded_policy.train(original_train_data + [new_story], default_domain)
+        loaded_policy.train([*original_train_data, new_story], default_domain)
 
         # Get the hash of the tracker state of new story
         new_story_states, _ = loaded_policy.featurizer.training_states_and_labels(
