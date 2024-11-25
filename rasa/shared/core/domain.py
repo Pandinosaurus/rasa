@@ -43,6 +43,7 @@ from rasa.shared.core.constants import (
     SlotMappingType,
     MAPPING_TYPE,
     MAPPING_CONDITIONS,
+    ACTIVE_LOOP,
 )
 from rasa.shared.exceptions import (
     RasaException,
@@ -512,7 +513,7 @@ class Domain:
             `used_entities` since this is the expected format of the intent
             when used internally.
         """
-        name, properties = list(intent.items())[0]
+        name, properties = next(iter(intent.items()))
 
         if properties:
             properties.setdefault(USE_ENTITIES_KEY, True)
@@ -703,7 +704,7 @@ class Domain:
                 }
             }
         else:
-            intent_name = list(intent.keys())[0]
+            intent_name = next(iter(intent.keys()))
 
         return (
             intent_name,
@@ -845,7 +846,7 @@ class Domain:
             User-defined intents that are default intents.
         """
         intent_names: Set[Text] = {
-            list(intent.keys())[0] if isinstance(intent, dict) else intent
+            next(iter(intent.keys())) if isinstance(intent, dict) else intent
             for intent in intents
         }
         return sorted(
@@ -902,7 +903,7 @@ class Domain:
     ) -> List[Union[Text, Dict]]:
         def sort(elem: Union[Text, Dict]) -> Union[Text, Dict]:
             if isinstance(elem, dict):
-                return list(elem.keys())[0]
+                return next(iter(elem.keys()))
             elif isinstance(elem, str):
                 return elem
 
@@ -1046,7 +1047,6 @@ class Domain:
     @rasa.shared.utils.common.lazy_property
     def slot_states(self) -> List[Text]:
         """Returns all available slot state strings."""
-
         return [
             f"{slot.name}_{feature_index}"
             for slot in self.slots
@@ -1409,9 +1409,11 @@ class Domain:
                 matching_entities = []
 
                 for mapping in slot.mappings:
-                    if mapping[MAPPING_TYPE] != str(
-                        SlotMappingType.FROM_ENTITY
-                    ) or mapping.get(MAPPING_CONDITIONS):
+                    mapping_conditions = mapping.get(MAPPING_CONDITIONS)
+                    if mapping[MAPPING_TYPE] != str(SlotMappingType.FROM_ENTITY) or (
+                        mapping_conditions
+                        and mapping_conditions[0].get(ACTIVE_LOOP) is not None
+                    ):
                         continue
 
                     for entity in entities:
@@ -1646,7 +1648,6 @@ class Domain:
         `entity_warnings`, `action_warnings` and `slot_warnings`. Excludes domain slots
         from domain warnings in case they are not featurized.
         """
-
         intent_warnings = self._get_symmetric_difference(self.intents, intents)
         entity_warnings = self._get_symmetric_difference(self.entities, entities)
         action_warnings = self._get_symmetric_difference(
@@ -1694,10 +1695,9 @@ class Domain:
 
         def get_exception_message(
             duplicates: Optional[List[Tuple[List[Text], Text]]] = None,
-            mappings: List[Tuple[Text, Text]] = None,
+            mappings: Optional[List[Tuple[Text, Text]]] = None,
         ) -> Text:
             """Return a message given a list of error locations."""
-
             message = ""
             if duplicates:
                 message += get_duplicate_exception_message(duplicates)
@@ -1709,7 +1709,6 @@ class Domain:
 
         def get_mapping_exception_message(mappings: List[Tuple[Text, Text]]) -> Text:
             """Return a message given a list of duplicates."""
-
             message = ""
             for name, action_name in mappings:
                 if message:
@@ -1914,6 +1913,9 @@ class Domain:
                     )
                     if should_send_domain:
                         action_names += [action_name]
+
+            elif action.startswith("validate_"):
+                action_names += [action]
 
         return action_names
 

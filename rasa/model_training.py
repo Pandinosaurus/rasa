@@ -28,6 +28,7 @@ import rasa.model
 
 CODE_NEEDS_TO_BE_RETRAINED = 0b0001
 CODE_FORCED_TRAINING = 0b1000
+CODE_NO_NEED_TO_TRAIN = 0b0000
 
 
 class TrainingResult(NamedTuple):
@@ -73,7 +74,9 @@ def _dry_run_result(
         "No training of components required "
         "(the responses might still need updating!)."
     )
-    return TrainingResult(dry_run_results=fingerprint_results)
+    return TrainingResult(
+        code=CODE_NO_NEED_TO_TRAIN, dry_run_results=fingerprint_results
+    )
 
 
 def get_unresolved_slots(domain: Domain, stories: StoryGraph) -> List[Text]:
@@ -160,7 +163,7 @@ def train(
         An instance of `TrainingResult`.
     """
     file_importer = TrainingDataImporter.load_from_config(
-        config, domain, training_files
+        config, domain, training_files, core_additional_arguments
     )
 
     stories = file_importer.get_stories()
@@ -260,7 +263,6 @@ def _train_graph(
     rasa.engine.validation.validate(model_configuration)
 
     tempdir_name = rasa.utils.common.get_temp_dir_name()
-
     # Use `TempDirectoryPath` instead of `tempfile.TemporaryDirectory` as this
     # leads to errors on Windows when the context manager tries to delete an
     # already deleted temporary directory (e.g. https://bugs.python.org/issue29982)
@@ -357,7 +359,7 @@ def train_core(
 
     """
     file_importer = TrainingDataImporter.load_core_importer_from_config(
-        config, domain, [stories]
+        config, domain, [stories], additional_arguments
     )
     stories_data = file_importer.get_stories()
     nlu_data = file_importer.get_nlu_data()
@@ -438,7 +440,7 @@ def train_nlu(
 
     # training NLU only hence the training files still have to be selected
     file_importer = TrainingDataImporter.load_nlu_importer_from_config(
-        config, domain, training_data_paths=[nlu_data]
+        config, domain, training_data_paths=[nlu_data], args=additional_arguments
     )
 
     training_data = file_importer.get_nlu_data()

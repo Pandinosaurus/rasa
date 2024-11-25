@@ -254,6 +254,15 @@ class GraphComponent(ABC):
         """Any extra python dependencies required for this component to run."""
         return []
 
+    @classmethod
+    def fingerprint_addon(cls, config: Dict[str, Any]) -> Optional[str]:
+        """Adds additional data to the fingerprint calculation.
+
+        This is useful if a component uses external data that is not provided
+        by the graph.
+        """
+        return None
+
 
 class GraphNodeHook(ABC):
     """Holds functionality to be run before and after a `GraphNode`."""
@@ -580,3 +589,4 @@ class GraphModelConfiguration:
     language: Optional[Text]
     core_target: Optional[Text]
     nlu_target: Optional[Text]
+    spaces: Optional[Dict[Text, Text]] = None

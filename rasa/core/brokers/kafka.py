@@ -2,6 +2,7 @@ import asyncio
 import os
 import json
 import logging
+import structlog
 import threading
 from asyncio import AbstractEventLoop
 from typing import Any, Text, List, Optional, Union, Dict, TYPE_CHECKING
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
     from confluent_kafka import KafkaError, Producer, Message
 
 logger = logging.getLogger(__name__)
+structlogger = structlog.get_logger()
 
 
 class KafkaEventBroker(EventBroker):
@@ -61,13 +63,17 @@ class KafkaEventBroker(EventBroker):
                 SCRAM-SHA-512. Default: `PLAIN`
             ssl_cafile: Optional filename of ca file to use in certificate
                 verification.
-            ssl_certfile: Optional filename of file in pem format containing
+
+            ssl_certfile : Optional filename of file in pem format containing
                 the client certificate, as well as any ca certificates needed to
                 establish the certificate's authenticity.
-            ssl_keyfile: Optional filename containing the client private key.
-            ssl_check_hostname: Flag to configure whether ssl handshake
+
+            ssl_keyfile : Optional filename containing the client private key.
+
+            ssl_check_hostname : Flag to configure whether ssl handshake
                 should verify that the certificate matches the broker's hostname.
-            security_protocol: Protocol used to communicate with brokers.
+
+            security_protocol : Protocol used to communicate with brokers.
                 Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
         """
         self.producer: Optional[Producer] = None
@@ -82,6 +88,7 @@ class KafkaEventBroker(EventBroker):
         self.ssl_cafile = ssl_cafile
         self.ssl_certfile = ssl_certfile
         self.ssl_keyfile = ssl_keyfile
+        self.queue_size = kwargs.get("queue_size")
         self.ssl_check_hostname = "https" if ssl_check_hostname else None
 
         # Async producer implementation followed from confluent-kafka asyncio example:
@@ -112,6 +119,9 @@ class KafkaEventBroker(EventBroker):
         """Publishes events."""
         from confluent_kafka import KafkaException
 
+        if retries == 1:
+            retries = 2
+
         if self.producer is None:
             self.producer = self._create_producer()
             try:
@@ -124,6 +134,13 @@ class KafkaEventBroker(EventBroker):
             try:
                 self._publish(event)
                 return
+            except BufferError as e:
+                logger.error(
+                    f"Could not publish message to kafka url '{self.url}'. "
+                    f"Failed with error: {e}"
+                )
+                self.producer.poll(1)
+                retries -= 1
             except Exception as e:
                 logger.error(
                     f"Could not publish message to kafka url '{self.url}'. "
@@ -161,6 +178,8 @@ class KafkaEventBroker(EventBroker):
             "bootstrap.servers": self.url,
             "error_cb": kafka_error_callback,
         }
+        if self.queue_size:
+            config["queue.buffering.max.messages"] = self.queue_size
 
         if self.security_protocol == "PLAINTEXT":
             authentication_params: Dict[Text, Any] = {
@@ -224,9 +243,14 @@ class KafkaEventBroker(EventBroker):
                 )
             ]
 
-        logger.debug(
-            f"Calling kafka send({self.topic}, value={event},"
-            f" key={partition_key!s}, headers={headers})"
+        reduced_event = rasa.shared.core.events.remove_parse_data(event)
+        structlogger.debug(
+            "kafka.publish.event",
+            event_info="Logging a reduced version of the Kafka event",
+            topic=self.topic,
+            rasa_event=reduced_event,
+            partition_key=partition_key,
+            headers=headers,
         )
 
         serialized_event = json.dumps(event).encode(DEFAULT_ENCODING)

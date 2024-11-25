@@ -1,10 +1,13 @@
+# file deepcode ignore HardcodedNonCryptoSecret/test: Secrets are all just examples for tests. # noqa: E501
+# file deepcode ignore NoHardcodedCredentials/test: Secrets are all just examples for tests. # noqa: E501
+
 from http import HTTPStatus
 import json
 import logging
 import time
 from typing import Any, Dict, Text
 from unittest import mock
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from aioresponses import aioresponses
 import pytest
@@ -248,7 +251,7 @@ def test_slack_no_metadata():
 
 
 def test_slack_message_sanitization():
-    test_uid = 17213535
+    test_uid = "17213535"
     target_message_1 = "You can sit here if you want"
     target_message_2 = "Hey, you can sit here if you want !"
     target_message_3 = "Hey, you can sit here if you want!"
@@ -302,6 +305,16 @@ def test_slack_message_sanitization():
         )
         == 0
     )
+
+
+def test_escape_called():
+    with patch("re.escape") as mock_escape:
+        input_text = "Some text"
+        uids_to_remove = ["uid1"]
+        SlackInput._sanitize_user_message(input_text, uids_to_remove)
+
+        # Check if re.escape was called with the expected argument
+        mock_escape.assert_called_with("uid1")
 
 
 def test_slack_init_token_parameter():
@@ -415,7 +428,6 @@ def test_is_slack_message_true():
 
 
 def test_is_slack_message_false():
-
     event = {
         "type": "message",
         "channel": "C2147483705",

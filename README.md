@@ -6,7 +6,7 @@
 [![PyPI version](https://badge.fury.io/py/rasa.svg)](https://badge.fury.io/py/rasa)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/rasa.svg)](https://pypi.python.org/pypi/rasa)
 [![Build Status](https://github.com/RasaHQ/rasa/workflows/Continuous%20Integration/badge.svg)](https://github.com/RasaHQ/rasa/actions)
-[![Coverage Status](https://api.codeclimate.com/v1/badges/756dc6fea1d5d3e127f7/test_coverage)](https://codeclimate.com/github/RasaHQ/rasa/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=RasaHQ_rasa&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=RasaHQ_rasa)
 [![Documentation Status](https://img.shields.io/badge/docs-stable-brightgreen.svg)](https://rasa.com/docs)
 ![Documentation Build](https://img.shields.io/netlify/d2e447e4-5a5e-4dc7-be5d-7c04ae7ff706?label=Documentation%20Build)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B8141%2Fgit%40github.com%3ARasaHQ%2Frasa.git.svg?type=shield)](https://app.fossa.com/projects/custom%2B8141%2Fgit%40github.com%3ARasaHQ%2Frasa.git?ref=badge_shield)
@@ -90,9 +90,9 @@ We are very happy to receive and merge your contributions into this repository!
 
 To contribute via pull request, follow these steps:
 
-1. Create an issue describing the feature you want to work on (or
-   have a look at the [contributor board](https://github.com/orgs/RasaHQ/projects/23))
-2. Write your code, tests and documentation, and format them with ``black``
+1. Create an issue describing the bug/improvement you want to work on or pick up an
+   existing issue in [Jira](https://rasa-open-source.atlassian.net/jira/software/c/projects/OSS/boards/1)
+2. Follow our Pull Request guidelines: write code, test, documentation, changelog and follow our [Code Style](#code-style)
 3. Create a pull request describing your changes
 
 For more detailed instructions on how to contribute code, check out these [code contributor guidelines](CONTRIBUTING.md).
@@ -114,6 +114,11 @@ Rasa uses Poetry for packaging and dependency management. If you want to build i
 you have to install Poetry first. Please follow
 [the official guide](https://python-poetry.org/docs/#installation) to see all possible options.
 
+To update an existing poetry version to the [version](.github/poetry_version.txt), currently used in rasa, run:
+```shell
+    poetry self update <version>
+```
+
 ### Managing environments
 
 The official [Poetry guide](https://python-poetry.org/docs/managing-environments/) suggests to use
@@ -121,8 +126,8 @@ The official [Poetry guide](https://python-poetry.org/docs/managing-environments
 This is how it can be done:
 
 ```bash
-pyenv install 3.7.9
-pyenv local 3.7.9  # Activate Python 3.7.9 for the current project
+pyenv install 3.10.10
+pyenv local 3.10.10  # Activate Python 3.10.10 for the current project
 ```
 *Note*: If you have trouble installing a specific version of python on your system
 it might be worth trying other supported versions.
@@ -305,6 +310,7 @@ make types
 ### Deploying documentation updates
 
 We use `Docusaurus v2` to build docs for tagged versions and for the `main` branch.
+To run Docusaurus, install `Node.js 12.x`.
 The static site that gets built is pushed to the `documentation` branch of this repo.
 
 We host the site on netlify. On `main` branch builds (see `.github/workflows/documentation.yml`), we push the built docs to
@@ -332,7 +338,7 @@ While this table represents our target release frequency, we reserve the right t
 Our End of Life policy defines how long a given release is considered supported, as well as how long a release is
 considered to be still in active development or maintenance.
 
-The maintentance duration and end of life for every release are shown on our website as part of the [Product Release and Maintenance Policy](https://rasa.com/rasa-product-release-and-maintenance-policy/).
+The maintenance duration and end of life for every release are shown on our website as part of the [Product Release and Maintenance Policy](https://rasa.com/rasa-product-release-and-maintenance-policy/).
 
 ### Cutting a Major / Minor release
 #### A week before release day
@@ -421,12 +427,20 @@ need your fixes to be on the `2.0.x` release branch). All patch releases must co
 steps + get the PR merged.
 4. Once the PR is in, pull the `.x` branch again and push the tag!
 
+### Additional Release Tasks 
+**Note: This is only required if the released version is the highest version available.
+For instance, perform the following steps when version > [version](https://github.com/RasaHQ/rasa/blob/main/rasa/version.py) on main.**
+
+In order to check compatibility between the new released Rasa version to the latest version of Rasa X/Enterprise, we perform the following steps:
+1. Following a new Rasa release, an automated pull request is created in [Rasa-X-Demo](https://github.com/RasaHQ/rasa-x-demo/pulls). 
+2. Once the above PR is merged, follow instructions [here](https://github.com/RasaHQ/rasa-x-demo/blob/master/.github/VERSION_BUMPER_PR_COMMENT.md), to release a version.
+3. Update the new version in the Rasa X/Enterprise [env file](https://github.com/RasaHQ/rasa-x/blob/main/.env).
+The [Rasa-X-Demo](https://github.com/RasaHQ/rasa-x-demo) project uses the new updated Rasa version to train and test a model which in turn is used by our CI to run tests in the Rasa X/Enterprise repository, 
+thus validating compatibility between Rasa and Rasa X/Enterprise.
+
 ### Actively maintained versions
 
-We're actively maintaining _any minor on our latest major release_ and _the latest minor of the previous major release_.
-Currently, this means the following minor versions will receive bugfixes updates:
-- 2.8
-- Every minor version on 3.x
+Please refer to the [Rasa Product Release and Maintenance Policy](https://rasa.com/rasa-product-release-and-maintenance-policy/) page.
 
 ## License
 Licensed under the Apache License, Version 2.0.
